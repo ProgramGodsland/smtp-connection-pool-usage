@@ -10,10 +10,10 @@ import javax.mail.Transport;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMessage.RecipientType;
 
-import org.nlab.smtp.transport.connection.ClosableSmtpConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.smtp.mock.connection.ClosableSmtpConnection;
 import com.smtp.mock.entities.EmailMessage;
 
 @Service

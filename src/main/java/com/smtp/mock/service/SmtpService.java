@@ -13,7 +13,6 @@ import javax.mail.internet.MimeMessage.RecipientType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.smtp.mock.connection.ClosableSmtpConnection;
 import com.smtp.mock.entities.EmailMessage;
 
 @Service

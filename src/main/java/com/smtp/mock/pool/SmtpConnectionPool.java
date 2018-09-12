@@ -6,13 +6,16 @@ import org.apache.commons.pool2.impl.AbandonedConfig;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
-import com.smtp.mock.connection.ClosableSmtpConnection;
+import com.smtp.mock.connection.SmtpConnection;
 import com.smtp.mock.factory.SmtpConnectionFactory;
 
 /**
- * Created by nlabrot on 30/04/15.
+ * Preparing a smtp connection thread pool
+ * 
+ * @author irlu
+ *
  */
-public class SmtpConnectionPool extends GenericObjectPool<ClosableSmtpConnection> {
+public class SmtpConnectionPool extends GenericObjectPool<SmtpConnection> {
 
   public SmtpConnectionPool(SmtpConnectionFactory factory) {
     super(factory);
@@ -27,6 +30,10 @@ public class SmtpConnectionPool extends GenericObjectPool<ClosableSmtpConnection
     super(factory, config, abandonedConfig);
   }
 
+  /**
+   * Open 10 thread initially
+   * 
+   */
   public void init() {
     try {
       for (int i = 0; i < 10; i++) {
@@ -35,30 +42,23 @@ public class SmtpConnectionPool extends GenericObjectPool<ClosableSmtpConnection
     } catch (Exception e) {
       e.printStackTrace();
     }
-
   }
 
   @Override
-  public ClosableSmtpConnection borrowObject() throws Exception {
-    ClosableSmtpConnection object = super.borrowObject();
-    if (object instanceof ObjectPoolAware) {
-      ((ObjectPoolAware) object).setObjectPool(this);
-    }
+  public SmtpConnection borrowObject() throws Exception {
+    SmtpConnection object = super.borrowObject();
+    object.setObjectPool(this);
     return object;
   }
 
   @Override
-  public ClosableSmtpConnection borrowObject(long borrowMaxWaitMillis) throws Exception {
-    ClosableSmtpConnection object = super.borrowObject(borrowMaxWaitMillis);
-    if (object instanceof ObjectPoolAware) {
-      ((ObjectPoolAware) object).setObjectPool(this);
-    }
+  public SmtpConnection borrowObject(long borrowMaxWaitMillis) throws Exception {
+    SmtpConnection object = super.borrowObject(borrowMaxWaitMillis);
+    object.setObjectPool(this);
     return object;
   }
 
   public Session getSession() {
     return ((SmtpConnectionFactory) getFactory()).getSession();
   }
-
-
 }

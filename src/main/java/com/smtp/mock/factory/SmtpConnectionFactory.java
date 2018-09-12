@@ -17,65 +17,62 @@ import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.smtp.mock.connection.ClosableSmtpConnection;
-import com.smtp.mock.connection.DefaultClosableSmtpConnection;
-import com.smtp.mock.strategy.ConnectionStrategy;
-import com.smtp.mock.strategy.TransportStrategy;
+import com.smtp.mock.connection.SmtpConnection;
 
 /**
- * A part of the code of this class is taken from the Spring <a href="http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/mail/javamail/JavaMailSenderImpl.html">JavaMailSenderImpl class</a>.
+ * A part of the code of this class is taken from the Spring <a href=
+ * "http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/mail/javamail/JavaMailSenderImpl.html">JavaMailSenderImpl
+ * class</a>.
  */
-public class SmtpConnectionFactory implements PooledObjectFactory<ClosableSmtpConnection> {
+public class SmtpConnectionFactory implements PooledObjectFactory<SmtpConnection> {
 
   private static final Logger LOG = LoggerFactory.getLogger(SmtpConnectionFactory.class);
 
   protected final Session session;
 
-  protected final TransportStrategy transportFactory;
-  protected final ConnectionStrategy connectionStrategy;
-
   protected Collection<TransportListener> defaultTransportListeners;
 
-  public SmtpConnectionFactory(Session session, TransportStrategy transportStrategy, ConnectionStrategy connectionStrategy, Collection<TransportListener> defaultTransportListeners) {
+  public SmtpConnectionFactory(Session session,
+      Collection<TransportListener> defaultTransportListeners) {
     this.session = session;
-    this.transportFactory = transportStrategy;
-    this.connectionStrategy = connectionStrategy;
     this.defaultTransportListeners = new ArrayList<>(defaultTransportListeners);
   }
+  
 
-  public SmtpConnectionFactory(Session session, TransportStrategy transportFactory, ConnectionStrategy connectionStrategy) {
-    this(session, transportFactory, connectionStrategy, Collections.<TransportListener>emptyList());
+  public SmtpConnectionFactory(Session session) {
+    this(session, Collections.<TransportListener>emptyList());
   }
 
 
   @Override
-  public PooledObject<ClosableSmtpConnection> makeObject() throws Exception {
+  public PooledObject<SmtpConnection> makeObject() throws Exception {
     LOG.debug("makeObject");
 
-    Transport transport = transportFactory.getTransport(session);
-    connectionStrategy.connect(transport);
+    Transport transport = session.getTransport();
+    transport.connect();
 
-    DefaultClosableSmtpConnection closableSmtpTransport = new DefaultClosableSmtpConnection(transport);
+    SmtpConnection closableSmtpTransport =
+        new SmtpConnection(transport);
     initDefaultListeners(closableSmtpTransport);
 
     return new DefaultPooledObject(closableSmtpTransport);
   }
 
   @Override
-  public void destroyObject(PooledObject<ClosableSmtpConnection> pooledObject) throws Exception {
+  public void destroyObject(PooledObject<SmtpConnection> pooledObject) throws Exception {
     try {
       if (LOG.isDebugEnabled()) {
         LOG.debug("destroyObject [{}]", pooledObject.getObject().isConnected());
       }
       pooledObject.getObject().clearListeners();
-      pooledObject.getObject().getDelegate().close();
+      pooledObject.getObject().getTransport().close();
     } catch (Exception e) {
       LOG.warn(e.getMessage(), e);
     }
   }
 
   @Override
-  public boolean validateObject(PooledObject<ClosableSmtpConnection> pooledObject) {
+  public boolean validateObject(PooledObject<SmtpConnection> pooledObject) {
     boolean connected = pooledObject.getObject().isConnected();
     LOG.debug("Is connected [{}]", connected);
     return connected;
@@ -83,12 +80,12 @@ public class SmtpConnectionFactory implements PooledObjectFactory<ClosableSmtpCo
 
 
   @Override
-  public void activateObject(PooledObject<ClosableSmtpConnection> pooledObject) throws Exception {
+  public void activateObject(PooledObject<SmtpConnection> pooledObject) throws Exception {
     initDefaultListeners(pooledObject.getObject());
   }
 
   @Override
-  public void passivateObject(PooledObject<ClosableSmtpConnection> pooledObject) throws Exception {
+  public void passivateObject(PooledObject<SmtpConnection> pooledObject) throws Exception {
     if (LOG.isDebugEnabled()) {
       LOG.debug("passivateObject [{}]", pooledObject.getObject().isConnected());
     }
@@ -108,16 +105,9 @@ public class SmtpConnectionFactory implements PooledObjectFactory<ClosableSmtpCo
     return session;
   }
 
-  public TransportStrategy getTransportFactory() {
-    return transportFactory;
-  }
-
-  public ConnectionStrategy getConnectionStrategy() {
-    return connectionStrategy;
-  }
-
-  private void initDefaultListeners(ClosableSmtpConnection smtpTransport) {
+  private void initDefaultListeners(SmtpConnection smtpTransport) {
     for (TransportListener transportListener : defaultTransportListeners) {
+      System.err.println("Smtp connection listener: " + transportListener);
       smtpTransport.addTransportListener(transportListener);
     }
   }

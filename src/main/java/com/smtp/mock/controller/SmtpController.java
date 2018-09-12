@@ -25,8 +25,8 @@ public class SmtpController {
 	@RequestMapping(value = "/{userId}/messages", method = RequestMethod.POST)
 	public ResponseEntity<EmailMessage> postNotify(@RequestBody EmailMessage request,
 			@PathVariable("userId") final String userId) {
-		// EmailMessage msg = poolService.send(userId, request);
-		EmailMessage msg = service.send(userId, request);
+		EmailMessage msg = poolService.send(userId, request);
+		//EmailMessage msg = service.send(userId, request);
 		return new ResponseEntity<EmailMessage>(msg, HttpStatus.OK);
 	}
 }

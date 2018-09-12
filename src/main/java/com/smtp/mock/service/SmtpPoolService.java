@@ -1,22 +1,17 @@
 package com.smtp.mock.service;
 
 import java.util.List;
-import java.util.Properties;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
-import javax.mail.Authenticator;
-import javax.mail.PasswordAuthentication;
-import javax.mail.Session;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMessage.RecipientType;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.smtp.mock.config.SmtpGmailConfig;
-import com.smtp.mock.connection.ClosableSmtpConnection;
+import com.smtp.mock.connection.SmtpConnection;
 import com.smtp.mock.entities.EmailMessage;
 import com.smtp.mock.factory.SmtpConnectionFactory;
 import com.smtp.mock.factory.SmtpConnectionFactoryBuilder;
@@ -24,37 +19,38 @@ import com.smtp.mock.pool.SmtpConnectionPool;
 
 @Service
 public class SmtpPoolService {
+
   @Autowired
-  private SmtpGmailConfig smtpConfig;
+  private SmtpEmailSender smtpEmailSender;
 
   private SmtpConnectionPool connectionPool;
   private SmtpConnectionFactory factory;
 
   @PostConstruct
   private void init() {
-    this.factory = SmtpConnectionFactoryBuilder.newSmtpBuilder().session(setEmailSession()).build();
+    this.factory = SmtpConnectionFactoryBuilder.newSmtpBuilder().session(smtpEmailSender.setEmailSession()).build();
     this.connectionPool = new SmtpConnectionPool(factory);
     connectionPool.init();
   }
 
-  private Session setEmailSession() {
-    Properties props = new Properties();
-    props.put("mail.smtp.host", smtpConfig.getSmtpHost());
-    props.put("mail.smtp.port", smtpConfig.getSmtpPort());
-    props.put("mail.transport.protocol", "smtp");
-    props.put("mail.smtp.auth", "true");
-    props.put("mail.smtp.starttls.enable", "true");
-    props.put("mail.debug", "true");
-
-    Authenticator authenticator = new Authenticator() {
-      protected PasswordAuthentication getPasswordAuthentication() {
-        return new PasswordAuthentication(smtpConfig.getUserName(), smtpConfig.getPassword());
-      }
-    };
-
-    Session session = Session.getInstance(props, authenticator);
-    return session;
-  }
+//  private Session setEmailSession() {
+//    Properties props = new Properties();
+//    props.put("mail.smtp.host", smtpConfig.getSmtpHost());
+//    props.put("mail.smtp.port", smtpConfig.getSmtpPort());
+//    props.put("mail.transport.protocol", "smtp");
+//    props.put("mail.smtp.auth", "true");
+//    props.put("mail.smtp.starttls.enable", "true");
+//    props.put("mail.debug", "true");
+//
+//    Authenticator authenticator = new Authenticator() {
+//      protected PasswordAuthentication getPasswordAuthentication() {
+//        return new PasswordAuthentication(smtpConfig.getUserName(), smtpConfig.getPassword());
+//      }
+//    };
+//
+//    Session session = Session.getInstance(props, authenticator);
+//    return session;
+//  }
 
   public EmailMessage send(String userId, EmailMessage emailMessage) {
     if (emailMessage == null) {
@@ -64,7 +60,8 @@ public class SmtpPoolService {
 
     List<String> addresses = emailMessage.getAddress();
 
-    try (ClosableSmtpConnection connection = connectionPool.borrowObject()) {
+    try {
+      SmtpConnection connection = connectionPool.borrowObject();
       MimeMessage mimeMessage = new MimeMessage(connection.getSession());
       if (addresses.size() == 1) {
 
@@ -81,7 +78,7 @@ public class SmtpPoolService {
 
       connection.sendMessage(mimeMessage);
       System.err.println("Message sent!");
-
+      connection.close();
     } catch (Exception e) {
       // TODO Auto-generated catch block
       System.err.println("Connection is null");

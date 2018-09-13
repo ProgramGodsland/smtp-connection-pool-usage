@@ -47,6 +47,22 @@ public class SmtpConnectionPool extends GenericObjectPool<SmtpConnection> {
   @Override
   public SmtpConnection borrowObject() throws Exception {
     SmtpConnection object = super.borrowObject();
+    System.err.println("Required object: " + object);
+    if (null == object) {
+      
+      System.err.println("Init again: ");
+      init();
+      
+      System.err.println("Other 10 threads are created!!");
+      object = super.borrowObject();
+      System.err.print("New object: " + object + " session: " + object.getSession());
+      
+    } else if(!object.isConnected()) {
+      System.err.println("Is Connection still open: " + object.isConnected());
+      object.getTransport().connect();
+      
+      System.err.println("Reconnected: " + object.isConnected());
+    }
     object.setObjectPool(this);
     return object;
   }
@@ -54,6 +70,7 @@ public class SmtpConnectionPool extends GenericObjectPool<SmtpConnection> {
   @Override
   public SmtpConnection borrowObject(long borrowMaxWaitMillis) throws Exception {
     SmtpConnection object = super.borrowObject(borrowMaxWaitMillis);
+    System.err.println("Required object: " + object);
     object.setObjectPool(this);
     return object;
   }

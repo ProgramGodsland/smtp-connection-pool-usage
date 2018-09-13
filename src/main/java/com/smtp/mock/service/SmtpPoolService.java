@@ -28,40 +28,39 @@ public class SmtpPoolService {
 
   @PostConstruct
   private void init() {
-    this.factory = SmtpConnectionFactoryBuilder.newSmtpBuilder().session(smtpEmailSender.setEmailSession()).build();
+    this.factory = SmtpConnectionFactoryBuilder.newSmtpBuilder()
+        .session(smtpEmailSender.setEmailSession()).build();
     this.connectionPool = new SmtpConnectionPool(factory);
     connectionPool.init();
   }
 
-//  private Session setEmailSession() {
-//    Properties props = new Properties();
-//    props.put("mail.smtp.host", smtpConfig.getSmtpHost());
-//    props.put("mail.smtp.port", smtpConfig.getSmtpPort());
-//    props.put("mail.transport.protocol", "smtp");
-//    props.put("mail.smtp.auth", "true");
-//    props.put("mail.smtp.starttls.enable", "true");
-//    props.put("mail.debug", "true");
-//
-//    Authenticator authenticator = new Authenticator() {
-//      protected PasswordAuthentication getPasswordAuthentication() {
-//        return new PasswordAuthentication(smtpConfig.getUserName(), smtpConfig.getPassword());
-//      }
-//    };
-//
-//    Session session = Session.getInstance(props, authenticator);
-//    return session;
-//  }
+  // private Session setEmailSession() {
+  // Properties props = new Properties();
+  // props.put("mail.smtp.host", smtpConfig.getSmtpHost());
+  // props.put("mail.smtp.port", smtpConfig.getSmtpPort());
+  // props.put("mail.transport.protocol", "smtp");
+  // props.put("mail.smtp.auth", "true");
+  // props.put("mail.smtp.starttls.enable", "true");
+  // props.put("mail.debug", "true");
+  //
+  // Authenticator authenticator = new Authenticator() {
+  // protected PasswordAuthentication getPasswordAuthentication() {
+  // return new PasswordAuthentication(smtpConfig.getUserName(), smtpConfig.getPassword());
+  // }
+  // };
+  //
+  // Session session = Session.getInstance(props, authenticator);
+  // return session;
+  // }
 
   public EmailMessage send(String userId, EmailMessage emailMessage) {
-    if (emailMessage == null) {
-      System.err.println("No requested message!!");
-      return null;
-    }
 
     List<String> addresses = emailMessage.getAddress();
 
     try {
       SmtpConnection connection = connectionPool.borrowObject();
+      System.err.println("Is Connection still open: " + connection.isConnected() + " session: "
+          + connection.getSession());
       MimeMessage mimeMessage = new MimeMessage(connection.getSession());
       if (addresses.size() == 1) {
 

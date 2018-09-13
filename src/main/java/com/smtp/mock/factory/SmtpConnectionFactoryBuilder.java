@@ -11,6 +11,7 @@ import javax.mail.Session;
 import javax.mail.event.TransportListener;
 
 /**
+ * Build a Smtp connection for the use of smtp connection pool
  * 
  * @author irlu
  *
@@ -18,11 +19,6 @@ import javax.mail.event.TransportListener;
 public class SmtpConnectionFactoryBuilder {
 
   protected Session session = null;
-  protected String protocol = null;
-  protected String host = null;
-  protected int port = -1;
-  protected String username;
-  protected String password;
 
   protected List<TransportListener> defaultTransportListeners = Collections.emptyList();
 

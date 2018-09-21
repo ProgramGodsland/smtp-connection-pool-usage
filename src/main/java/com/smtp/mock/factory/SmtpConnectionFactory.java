@@ -33,26 +33,25 @@ public class SmtpConnectionFactory implements PooledObjectFactory<SmtpConnection
   protected Collection<TransportListener> defaultTransportListeners;
 
   public SmtpConnectionFactory(Session session,
-      Collection<TransportListener> defaultTransportListeners) {
+      Collection<TransportListener> defaultTransportListeners) throws Exception {
     this.session = session;
     this.defaultTransportListeners = new ArrayList<>(defaultTransportListeners);
   }
-  
 
-  public SmtpConnectionFactory(Session session) {
+  public SmtpConnectionFactory(Session session) throws Exception {
     this(session, Collections.<TransportListener>emptyList());
   }
 
 
   @Override
   public PooledObject<SmtpConnection> makeObject() throws Exception {
-    LOG.debug("makeObject");
+    System.err.println("makeObject");
 
     Transport transport = session.getTransport();
+    System.err.println("session  info is : " + session.getProperties());
     transport.connect();
 
-    SmtpConnection closableSmtpTransport =
-        new SmtpConnection(transport);
+    SmtpConnection closableSmtpTransport = new SmtpConnection(transport);
     initDefaultListeners(closableSmtpTransport);
 
     return new DefaultPooledObject(closableSmtpTransport);

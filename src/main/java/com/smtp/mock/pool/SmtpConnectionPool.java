@@ -4,8 +4,8 @@ import javax.mail.Session;
 
 import org.apache.commons.pool2.impl.AbandonedConfig;
 import org.apache.commons.pool2.impl.GenericObjectPool;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
+import com.smtp.mock.config.SmtpPoolConfig;
 import com.smtp.mock.connection.SmtpConnection;
 import com.smtp.mock.factory.SmtpConnectionFactory;
 
@@ -17,30 +17,34 @@ import com.smtp.mock.factory.SmtpConnectionFactory;
  */
 public class SmtpConnectionPool extends GenericObjectPool<SmtpConnection> {
 
+  private SmtpPoolConfig config;
+
   public SmtpConnectionPool(SmtpConnectionFactory factory) {
     super(factory);
   }
 
-  public SmtpConnectionPool(SmtpConnectionFactory factory, GenericObjectPoolConfig config) {
+  public SmtpConnectionPool(SmtpConnectionFactory factory, SmtpPoolConfig config) {
     super(factory, config);
+    this.config = config;
   }
 
-  public SmtpConnectionPool(SmtpConnectionFactory factory, GenericObjectPoolConfig config,
+  public SmtpConnectionPool(SmtpConnectionFactory factory, SmtpPoolConfig config,
       AbandonedConfig abandonedConfig) {
     super(factory, config, abandonedConfig);
   }
 
-  /**
-   * Open 10 thread initially
-   * 
-   */
-  public void init() {
-    try {
-      for (int i = 0; i < 10; i++) {
-        super.addObject();
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
+  public void setConfig(SmtpPoolConfig config) {
+    this.config = config;
+  }
+
+  public void init() throws Exception {
+    if (config == null) {
+      System.err.println("Add one object!");
+      addObject();
+    }
+    for (int i = 0; i < config.getMaxTotal(); i++) {
+      System.err.println("Add object! ");
+      addObject();
     }
   }
 
@@ -48,19 +52,18 @@ public class SmtpConnectionPool extends GenericObjectPool<SmtpConnection> {
   public SmtpConnection borrowObject() throws Exception {
     SmtpConnection object = super.borrowObject();
     System.err.println("Required object: " + object);
-    if (null == object) {
-      
-      System.err.println("Init again: ");
-      init();
-      
-      System.err.println("Other 10 threads are created!!");
-      object = super.borrowObject();
-      System.err.print("New object: " + object + " session: " + object.getSession());
-      
-    } else if(!object.isConnected()) {
+//    if (object == null) {
+//      for(int i = 0; i < 10; i++) {
+//        addObject();
+//      }
+//      object = super.borrowObject();
+//      System.err.println("Is Connection still open: " + object.isConnected() + " active number: "
+//          + getNumActive() + " idled number: " + getNumIdle());
+//    }
+    if (!object.isConnected()) {
       System.err.println("Is Connection still open: " + object.isConnected());
       object.getTransport().connect();
-      
+
       System.err.println("Reconnected: " + object.isConnected());
     }
     object.setObjectPool(this);
@@ -73,6 +76,15 @@ public class SmtpConnectionPool extends GenericObjectPool<SmtpConnection> {
     System.err.println("Required object: " + object);
     object.setObjectPool(this);
     return object;
+  }
+
+  @Override
+  public void returnObject(SmtpConnection connection) {
+    int activeNum = getNumActive();
+    
+    super.returnObject(connection);
+    System.err.println("Active number: " + activeNum + " idled number: " + getNumIdle()
+    + " total number: " + getNumWaiters());
   }
 
   public Session getSession() {

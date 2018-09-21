@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 @Configuration
 public class AppConfig {
-  
   /**
    * Common use. This object mapper serves internal json conversion purposes.
    */

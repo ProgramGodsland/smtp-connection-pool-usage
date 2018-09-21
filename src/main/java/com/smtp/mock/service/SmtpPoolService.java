@@ -11,6 +11,7 @@ import javax.mail.internet.MimeMessage.RecipientType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.smtp.mock.config.SmtpPoolConfig;
 import com.smtp.mock.connection.SmtpConnection;
 import com.smtp.mock.entities.EmailMessage;
 import com.smtp.mock.factory.SmtpConnectionFactory;
@@ -23,14 +24,19 @@ public class SmtpPoolService {
   @Autowired
   private SmtpEmailSender smtpEmailSender;
 
+  @Autowired
+  private SmtpPoolConfig poolConfig;
+
   private SmtpConnectionPool connectionPool;
   private SmtpConnectionFactory factory;
 
   @PostConstruct
-  private void init() {
+  private void init() throws Exception {
     this.factory = SmtpConnectionFactoryBuilder.newSmtpBuilder()
         .session(smtpEmailSender.setEmailSession()).build();
-    this.connectionPool = new SmtpConnectionPool(factory);
+    System.err.println("Session creation: " + factory.getSession().getTransport().isConnected());
+    this.connectionPool = new SmtpConnectionPool(factory, poolConfig);
+    System.err.println("Pool creation count: " + connectionPool.getCreatedCount());
     connectionPool.init();
   }
 
@@ -59,8 +65,10 @@ public class SmtpPoolService {
 
     try {
       SmtpConnection connection = connectionPool.borrowObject();
-      System.err.println("Is Connection still open: " + connection.isConnected() + " session: "
-          + connection.getSession());
+      System.err.println("Is Connection still open: " + connection.isConnected()
+          + " idled connection: " + connectionPool.getNumIdle() + " borrowed connection: "
+          + connectionPool.getBorrowedCount() + " active connection: "
+          + connectionPool.getNumActive());
       MimeMessage mimeMessage = new MimeMessage(connection.getSession());
       if (addresses.size() == 1) {
 
@@ -77,7 +85,13 @@ public class SmtpPoolService {
 
       connection.sendMessage(mimeMessage);
       System.err.println("Message sent!");
-      connection.close();
+      connectionPool.returnObject(connection);
+
+      System.err.println("Is Connection still open: " + connection.isConnected() + " total max: "
+          + connectionPool.getMaxTotal() + " idled conncetion: " + connectionPool.getNumIdle()
+          + " returned connection: " + connectionPool.getReturnedCount() + " active connection: "
+          + connectionPool.getNumActive());
+
     } catch (Exception e) {
       // TODO Auto-generated catch block
       System.err.println("Connection is null");

@@ -47,9 +47,11 @@ public class SmtpConnectionFactoryBuilder {
    * Build the {@link SmtpConnectionFactory}
    *
    * @return
+   * @throws Exception 
    */
-  public SmtpConnectionFactory build() {
+  public SmtpConnectionFactory build() throws Exception {
     if (session == null) {
+      System.err.println("session is newly created");
       session = Session.getInstance(new Properties());
     }
 

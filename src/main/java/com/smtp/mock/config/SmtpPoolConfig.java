@@ -22,19 +22,21 @@ public class SmtpPoolConfig extends GenericObjectPoolConfig {
   private void init() {
     maxTotal = loadMaxTotal(MAX_TOTAL_KEY);
     minIdle = loadMinIdle(MIN_IDLE_KEY);
+    setBlockWhenExhausted(false);
     setMaxTotal(maxTotal);
     setMinIdle(minIdle);
-    setMaxIdle(maxTotal);
+    setMaxIdle(4);
+//    setMaxIdle(maxTotal);
     setMaxWaitMillis(25000);
-    //setBlockWhenExhausted(false);
+    setTimeBetweenEvictionRunsMillis(1);
     System.err.println("Smtp pool config max : " + getMaxTotal());
   }
 
   public int loadMaxTotal(String maxTotalKey) {
-    return 3;
+    return 10;
   }
 
   public int loadMinIdle(String minIdleKey) {
-    return 1;
+    return 2;
   }
 }

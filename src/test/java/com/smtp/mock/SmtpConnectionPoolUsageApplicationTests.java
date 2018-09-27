@@ -35,7 +35,7 @@ public class SmtpConnectionPoolUsageApplicationTests {
 
   @Before
   public void setUp() {
-    counter.initialize(20);
+    counter.initialize(10);
   }
 
   // @Test

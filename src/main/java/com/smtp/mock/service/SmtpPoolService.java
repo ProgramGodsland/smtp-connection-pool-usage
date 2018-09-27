@@ -37,7 +37,8 @@ public class SmtpPoolService {
     System.err.println("Session creation: " + factory.getSession().getTransport().isConnected());
     this.connectionPool = new SmtpConnectionPool(factory, poolConfig);
     System.err.println("Pool creation count: " + connectionPool.getCreatedCount());
-    connectionPool.init();
+    // connectionPool.init();
+    connectionPool.setTestOnBorrow(true);
   }
 
   // private Session setEmailSession() {
@@ -66,10 +67,10 @@ public class SmtpPoolService {
     try {
       SmtpConnection connection = connectionPool.borrowObject();
       System.err.println("Is Connection still open: " + connection.isConnected()
-          + " idled connection: " + connectionPool.getNumIdle() + " borrowed connection: "
-          + connectionPool.getBorrowedCount() + " active connection: "
-          + connectionPool.getNumActive());
-      MimeMessage mimeMessage = new MimeMessage(connection.getSession());
+          + " borrowed connection: " + connectionPool.getBorrowedCount() + " active connection: "
+          + connectionPool.getNumActive() + " idled connection: " + connectionPool.getNumIdle()
+          + " total max active: " + (connectionPool.getMaxTotal() - connectionPool.getMaxIdle()));
+      MimeMessage mimeMessage = new MimeMessage(connectionPool.getSession());
       if (addresses.size() == 1) {
 
         mimeMessage.setRecipients(RecipientType.TO, addresses.get(0));
@@ -87,10 +88,10 @@ public class SmtpPoolService {
       System.err.println("Message sent!");
       connectionPool.returnObject(connection);
 
-      System.err.println("Is Connection still open: " + connection.isConnected() + " total max: "
-          + connectionPool.getMaxTotal() + " idled conncetion: " + connectionPool.getNumIdle()
+      System.err.println("Is Connection still open: " + connection.isConnected()
           + " returned connection: " + connectionPool.getReturnedCount() + " active connection: "
-          + connectionPool.getNumActive());
+          + connectionPool.getNumActive() + " idled conncetion: " + connectionPool.getNumIdle()
+          + " total max: " + connectionPool.getMaxTotal());
 
     } catch (Exception e) {
       // TODO Auto-generated catch block

@@ -66,7 +66,6 @@ public class SmtpConnectionPool extends GenericObjectPool<SmtpConnection> {
 
       System.err.println("Reconnected: " + object.isConnected());
     }
-    object.setObjectPool(this);
     return object;
   }
 
@@ -74,7 +73,6 @@ public class SmtpConnectionPool extends GenericObjectPool<SmtpConnection> {
   public SmtpConnection borrowObject(long borrowMaxWaitMillis) throws Exception {
     SmtpConnection object = super.borrowObject(borrowMaxWaitMillis);
     System.err.println("Required object: " + object);
-    object.setObjectPool(this);
     return object;
   }
 

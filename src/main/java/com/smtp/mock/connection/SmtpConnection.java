@@ -13,7 +13,7 @@ import javax.mail.internet.MimeMessage;
 import com.smtp.mock.pool.SmtpConnectionPool;
 
 /**
- * Smtp connection 
+ * Smtp connection
  * 
  * @author irlu
  *
@@ -21,7 +21,6 @@ import com.smtp.mock.pool.SmtpConnectionPool;
 public class SmtpConnection {
 
   private final Transport transport;
-  private SmtpConnectionPool objectPool;
 
   private final List<TransportListener> transportListeners = new ArrayList<>();
 
@@ -55,22 +54,8 @@ public class SmtpConnection {
     return transport.isConnected();
   }
 
-
-  public void close() throws Exception {
-    objectPool.returnObject(this);
-  }
-
-  public void setObjectPool(SmtpConnectionPool objectPool) {
-    this.objectPool = objectPool;
-  }
-
   public Transport getTransport() {
     return transport;
-  }
-
-
-  public Session getSession() {
-    return objectPool.getSession();
   }
 
 
